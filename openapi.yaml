@@ -1,0 +1,162 @@
+openapi: 3.0.1
+info:
+  title: Remittance API Documentation
+  version: 1.0.0
+  description: API documentation for Rate Feed, SWIFT, IBAN, and Zipcode services.
+servers:
+  - url: https://api.yourdomain.com
+    description: Main API server
+
+paths:
+  /ratefeed/latest/{baseCurrency}:
+    get:
+      summary: Get latest exchange rates
+      description: >
+        Fetches the latest foreign exchange rates based on the given base currency. 
+        Rates are synced hourly into `SOL_RATE_FEED`. After syncing, a margin calculation job runs and stores data in `SOL_MARGIN_RATE`.
+      parameters:
+        - name: baseCurrency
+          in: path
+          required: true
+          description: Base currency code (e.g., INR, USD, EUR)
+          schema:
+            type: string
+            example: INR
+        - name: apikey
+          in: query
+          required: true
+          description: Your API key
+          schema:
+            type: string
+            example: 27b0b75bab17c1da7ec4628866665297
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  base:
+                    type: string
+                    example: INR
+                  date:
+                    type: string
+                    example: 2025-09-13
+                  rates:
+                    type: object
+                    additionalProperties:
+                      type: number
+                    example:
+                      USD: 0.0113
+                      EUR: 0.00966
+
+  /swift/validate:
+    post:
+      summary: Validate SWIFT code
+      description: >
+        User enters a SWIFT code. API validates it and returns the bank name and address.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                swiftCode:
+                  type: string
+                  example: HDFCINBB
+      responses:
+        '200':
+          description: Valid SWIFT code
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bankName:
+                    type: string
+                    example: HDFC Bank
+                  bankAddress:
+                    type: string
+                    example: Mumbai, India
+        '400':
+          description: Invalid SWIFT code
+
+  /iban/validate:
+    post:
+      summary: Validate IBAN
+      description: >
+        User enters an IBAN. API validates it and splits it into Country Code, Routing Code, and Account Number.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                iban:
+                  type: string
+                  example: DE89370400440532013000
+      responses:
+        '200':
+          description: Valid IBAN
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  countryCode:
+                    type: string
+                    example: DE
+                  routingCode:
+                    type: string
+                    example: 37040044
+                  accountNumber:
+                    type: string
+                    example: 0532013000
+        '400':
+          description: Invalid IBAN
+
+  /zipcode/search:
+    get:
+      summary: Search details by Zip Code
+      description: >
+        Fetches the address details for a given postal/zip code.
+      parameters:
+        - name: zip_code
+          in: query
+          required: true
+          description: Postal code
+          schema:
+            type: string
+            example: 400001
+        - name: apikey
+          in: query
+          required: true
+          description: API key
+          schema:
+            type: string
+            example: 4315-e1a2488b-c29e928f-c84c78a7-8261de68c5188369e94
+      responses:
+        '200':
+          description: Zip code found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  zip_code:
+                    type: string
+                    example: 400001
+                  city:
+                    type: string
+                    example: Mumbai
+                  state:
+                    type: string
+                    example: Maharashtra
+                  country:
+                    type: string
+                    example: India
+        '404':
+          description: Zip code not found
